@@ -3,6 +3,7 @@ package com.ristn.cpk.server.views.packages;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 import com.ristn.cpk.server.data.CPackage;
@@ -22,9 +23,12 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
@@ -41,6 +45,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.extern.java.Log;
 import org.vaadin.firitin.components.DynamicFileDownloader;
+import org.vaadin.klaudeta.PaginatedGrid;
 
 @PageTitle("Packages")
 @Route(value = "packages", layout = MainLayout.class)
@@ -49,24 +54,23 @@ import org.vaadin.firitin.components.DynamicFileDownloader;
 @AnonymousAllowed
 public class PackagesView extends Div {
     private final ListDataProvider<CPackage> packages;
-	private Grid<CPackage> grid;
-	private final Filters filters;
+    private final Filters filters;
+    private final PaginatedGrid<CPackage, ?> grid;
 
     private final Dialog uploadPrompt;
     private final PackageService packageService;
 
     public PackagesView(PackageService packageService) {
         this.packageService = packageService;
+        this.packages = DataProvider.ofCollection(packageService.getPackages());
+        this.grid = createGrid();
+        this.uploadPrompt = createAddPackageDialog();
+        this.filters = new Filters(this::refreshGrid, this.grid);
 
         setSizeFull();
         addClassNames("packages-view");
 
-        uploadPrompt = createAddPackageDialog();
-
-        packages = DataProvider.ofCollection(packageService.getPackages());
         packages.setSortOrder(CPackage::getPackageName, SortDirection.ASCENDING);
-
-        filters = new Filters(this::refreshGrid);
 
         Button addBtn = new Button("Add Package", e -> uploadPrompt.open());
         addBtn.addClassName("packages-view-button-1");
@@ -85,7 +89,7 @@ public class PackagesView extends Div {
         controlBar.setSpacing(false);
         controlBar.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
 
-        VerticalLayout layout = new VerticalLayout(controlBar, createGrid());
+        VerticalLayout layout = new VerticalLayout(controlBar, grid);
         layout.setSizeFull();
         layout.setPadding(false);
         layout.setSpacing(false);
@@ -207,8 +211,9 @@ public class PackagesView extends Div {
     public static class Filters extends Div {
 
         private final SynchronousTextField name = new SynchronousTextField();
+        private final Select<Integer> page = new Select<>();
 
-        public Filters(Runnable onSearch) {
+        public Filters(Runnable onSearch, PaginatedGrid<CPackage, ?> grid) {
 
             setWidthFull();
             addClassName("filter-layout");
@@ -219,7 +224,12 @@ public class PackagesView extends Div {
             name.setLabel("Find Package:");
             name.addInputListener(e -> onSearch.run());
 
-            add(name);
+            page.setLabel("Page Size:");
+            page.setItems(10, 30, 70, 150, 300);
+            page.setValue(30);
+            page.addValueChangeListener(e -> grid.setPageSize(page.getValue()));
+
+            add(name, page);
         }
 
         private SerializablePredicate<CPackage> getPredicate() {
@@ -232,8 +242,26 @@ public class PackagesView extends Div {
         }
     }
 
-    private Component createGrid() {
-        grid = new Grid<>(CPackage.class, false);
+    public static void info(String msg) {
+        Notification notification = Notification.show(msg, 2000, Notification.Position.BOTTOM_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+    }
+
+    public static void warn(String msg) {
+        Notification notification = Notification.show(msg, 2000, Notification.Position.BOTTOM_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
+    }
+
+    public static void fail(String msg) {
+        Notification notification = Notification.show(msg, 2000,
+                Notification.Position.BOTTOM_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+    }
+
+    private PaginatedGrid<CPackage, ?> createGrid() {
+        PaginatedGrid<CPackage, ?> grid = new PaginatedGrid<>(CPackage.class);
+
+        grid.removeAllColumns();
         grid.addColumn("packageName").setAutoWidth(true);
         grid.addColumn(LitRenderer
                     .<CPackage>of("<a href='/details/${item.name}'>Details</a>")
@@ -241,8 +269,9 @@ public class PackagesView extends Div {
                             CPackage::getPackageName))
             .setAutoWidth(true)
             .setHeader("Package Details");
-        grid.addColumn(new ComponentRenderer<>(pkg -> new DynamicFileDownloader("Download", pkg.getPackageName() + ".zip",
-                out -> packageService.downloadPackage(pkg.getPackageName(), out))))
+        grid.addColumn(new ComponentRenderer<>(pkg ->
+                    new DynamicFileDownloader("Download", pkg.getPackageName() + ".zip",
+                            out -> packageService.downloadPackage(pkg.getPackageName(), out))))
             .setAutoWidth(true)
             .setHeader("Source Code");
         grid.setDataProvider(packages);
@@ -250,6 +279,9 @@ public class PackagesView extends Div {
         grid.addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_10);
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         grid.setSelectionMode(Grid.SelectionMode.NONE);
+
+        grid.setPageSize(30);
+        grid.setPaginatorSize(3);
 
         return grid;
     }

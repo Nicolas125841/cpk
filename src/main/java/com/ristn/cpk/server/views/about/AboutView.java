@@ -56,7 +56,7 @@ public class AboutView extends VerticalLayout {
                 new ListItem(
                         inlineH2("Simply specify package dependencies with a "),
                         notation,
-                        inlineH2("declaration in your C program.")
+                        inlineH2("declaration in your C program (requires CPK client).")
                 )
         );
 

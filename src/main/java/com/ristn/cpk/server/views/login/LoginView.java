@@ -2,6 +2,7 @@ package com.ristn.cpk.server.views.login;
 
 import com.ristn.cpk.server.views.MainLayout;
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.login.LoginForm;
@@ -28,6 +29,22 @@ public class LoginView extends Composite<VerticalLayout> implements BeforeEnterO
         getContent().add(loginForm);
 
         loginForm.setAction("login");
+        loginForm.addForgotPasswordListener(e -> forgotDialog());
+    }
+
+    private void forgotDialog() {
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader("Recover Password");
+        dialog.setText("To recover your administrator password, please check your server's local server-config.yaml " +
+                "file (located at the server's root directory). The entry" +
+                " 'password' contains the current password for this server instance.");
+
+        dialog.setCancelable(false);
+
+        dialog.setConfirmText("Okay");
+        dialog.setConfirmButtonTheme("error primary");
+
+        dialog.open();
     }
 
     @Override

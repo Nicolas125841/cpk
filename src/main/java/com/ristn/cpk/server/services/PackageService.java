@@ -97,12 +97,31 @@ public class PackageService {
 	public void downloadPackage(String name, OutputStream target) {
 		CPackage tmp = new CPackage(name);
 
-		try {
-			if (packages.contains(tmp) && baseUrl.resolve(name).toFile().exists()) {
-				Files.copy(baseUrl.resolve(name).resolve(name + ".zip"), target);
+		for(int tries = 0; tries < 3; tries++) {
+			try {
+				if (packages.contains(tmp) && baseUrl.resolve(name)
+				                                     .toFile()
+				                                     .exists()) {
+					Files.copy(baseUrl.resolve(name)
+					                  .resolve(name + ".zip"), target);
+
+					return;
+				}
 			}
-		} catch (IOException exception) {
-			log.info(exception.getMessage());
+			catch (IOException exception) {
+				log.info(exception.getMessage());
+
+				if(tries == 2) {
+					throw new RuntimeException(exception);
+				}
+			}
+
+			try {
+				Thread.sleep(5000);
+			}
+			catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
