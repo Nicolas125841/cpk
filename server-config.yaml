@@ -1,2 +1,2 @@
 !!com.ristn.cpk.server.data.AdminData {contactEmail: admin@email.com, password: password,
-  serverUrl: 'C:\Users\Nicolas\Documents\OtherFileServer'}
+  serverUrl: 'http://localhost:3000'}
