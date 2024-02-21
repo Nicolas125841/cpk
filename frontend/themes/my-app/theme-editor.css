@@ -1,0 +1,11 @@
+vaadin-grid.click-grid::part(row):hover {
+	--vaadin-grid-cell-background: #FFF8D1;
+}
+
+vaadin-grid.click-grid * {
+	cursor: pointer;
+}
+
+vaadin-button {
+	cursor: pointer;
+}
