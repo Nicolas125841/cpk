@@ -10,7 +10,7 @@ of the expense rule.
 
 This body MUST represents the DB schema: 
 
-```json
+```
 {
   name: { 
     type: String,
@@ -49,7 +49,7 @@ These fields are populated as follows:
 
 Non-required fields to not have to be supplied in the JSON body. An example request body is:
 
-```json
+```
 {
     'name': 'Mortgage',
     'amount': -7667,
