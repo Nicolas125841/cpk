@@ -5,7 +5,7 @@
 This microservice inserts an expense rule into a expenseRules MongoDB collection.
 
 #### [PUT] :5004/api/putExpenseRule: 
-This endpoint accepts a PUT request with a JSON body that contains the object representaiton
+This endpoint accepts a HTTP PUT request with a JSON body that contains the object representaiton
 of the expense rule. 
 
 This body MUST represents the DB schema: 
