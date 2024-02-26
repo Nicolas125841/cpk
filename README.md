@@ -133,4 +133,4 @@ is 200, the message can be verified by parsing the response body as a string or 
 
 ### UML Sequence Diagram
 
-![Diagram](/UML/SequenceDiagram.PNG)
+![Diagram](UML/ExpenseRulePutUMLSequenceDiagram.png)
